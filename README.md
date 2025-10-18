@@ -22,4 +22,5 @@ A simple client-server chat application where a server and client can exchange m
 A randomized maze escape game where the player navigates a maze, collects a key, and escapes while avoiding AI-controlled bots.
 
 
+![batsy](batsy.jpg)
 
