@@ -205,6 +205,27 @@ wrong_lec:
                     u++;
                 }
             }
+            std::ifstream dlog("classes_log.txt");
+            if (!dlog){
+                std::cout << "failed to read classes_log \n";
+                exit(1);
+            }
+            std::string lined;
+            for (int i=0;i<sub_count;i++){
+                std::getline(dlog,lined);
+                std::getline(dlog,lined);
+                std::getline(dlog,lined,':');
+                std::getline(dlog,lined);
+                subjects[i].lecture_left=stoi(lined);
+                std::getline(dlog,lined);
+                std::getline(dlog,lined,':');
+                std::getline(dlog,lined);
+                subjects[i].lab_left=stoi(lined);
+                std::getline(dlog,lined);
+                std::getline(dlog,lined,':');
+                std::getline(dlog,lined);
+                subjects[i].tut_left=stoi(lined);
+            }
 back_list:            
             system("clear");
             std::cout << "press the number against subject to log that absent: \n";
@@ -262,6 +283,34 @@ limits:
             std::cout << "Failed to create temp file\n";
             exit(1);
         }
+        std::ifstream iffw("work_days.txt");
+        if (!iffw){
+            std::cout << "no work days file \n";
+            exit(1);
+        }
+        for (int i=0;i<5;i++){
+            std::string work_line,wd;
+            std::getline(iffw,work_line,':');
+            std::getline(iffw,wd);
+            int val_wd=std::stoi(wd);
+            days[i]=val_wd;
+        }
+        iffw.close();
+        for (int i=0;i<sub_count;i++){
+            if (subjects[i].TUT!=-1){
+                subjects[i].tut_total=days[subjects[i].TUT];
+            }
+            if (subjects[i].LAB!=-1){
+                subjects[i].lab_total=days[subjects[i].LAB];
+            }
+            int lec_c=0;
+            for (int j=0;j<5;j++){
+                if (subjects[i].Lecture[j]>0){
+                    lec_c+=(subjects[i].Lecture[j])*days[j];
+                }
+            }
+            subjects[i].lecture_total=lec_c;
+        }
         for (int i=0;i<sub_count;i++){
             offt<< subjects[i].name << "\n";
             if (subjects[i].lecture_total>=0){
@@ -270,7 +319,7 @@ limits:
             }
             if (subjects[i].lab_total>=0){
             offt<< "Total Lab : " << subjects[i].lab_total<< "\n";
-            offt<< "Lab Left : " << subjects[i].lecture_left<<"\n";
+            offt<< "Lab Left : " << subjects[i].lab_left<<"\n";
             }
             if (subjects[i].tut_total>=0){
             offt<< "Totat tut : " << subjects[i].tut_total<<"\n";
