@@ -1,0 +1,35 @@
+Ai
+Total Lecture : 0
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+Analog
+Total Lecture : 0
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+DSA
+Total Lecture : 0
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+Maths
+Total Lecture : 0
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+Network
+Total Lecture : 0
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0

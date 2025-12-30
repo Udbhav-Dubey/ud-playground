@@ -1,0 +1,25 @@
+{
+    "subjects": {
+        "a": {
+            "Lecture": {
+                "per_week": 3,
+                "total_expected": 57,
+                "absent_count": 0
+            },
+            "Practical": {
+                "per_week": 1,
+                "total_expected": 19,
+                "absent_count": 0
+            }
+        },
+        "b": {
+            "Tutorial": {
+                "per_week": 1,
+                "total_expected": 19,
+                "absent_count": 0
+            }
+        },
+        "1": {}
+    },
+    "total_weeks": 19
+}
