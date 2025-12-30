@@ -343,6 +343,71 @@ again:
             std::cout << "cmmon man \n";
         }      
     }
+    
+    int readValue(std::istream& inn) {
+        std::string lin;
+        std::getline(inn, lin, ':'); 
+        std::getline(inn, lin);      
+        return std::stoi(lin);
+}
+    void act_log(const std::string &sub_name,int total,int left){
+        std::cout << sub_name << " : " << "total -> " << total << " left -> " << left 
+            << " can leave now -> " << int(0.25*total)-left << "\n";
+    }
+    void showlog(){
+        std::ifstream in("classes.txt");
+        if (!in){
+            std::cout << "error in finding classes.txt \ncreate file first using option 1 \n";
+            return ;
+        }
+        std::string line;
+        sub_count=0;
+            while(std::getline(in,line)){
+                if (line.empty()){continue;}
+                sub_count++;                
+            }
+            sub_count /=4;
+            in.close();
+        std::ifstream inn("classes_log.txt");
+        if (!inn){
+            std::cout << "error in finding classes_log.txt \n";
+        }
+        std::vector<Subject> subjects(sub_count);
+        std::string lined;
+
+        for (int i=0;i<sub_count;i++){
+        std::getline(inn,subjects[i].name);
+        subjects[i].lecture_total=readValue(inn);
+        subjects[i].lecture_left=readValue(inn);
+        subjects[i].lab_total=readValue(inn);
+        subjects[i].lab_left=readValue(inn);
+        subjects[i].tut_total=readValue(inn);
+        subjects[i].tut_left=readValue(inn);
+        }
+        system("clear");
+        for (int i=0;i<sub_count;i++){
+            std::cout << "\n" << subjects[i].name << " : \n";
+            act_log("lecture",subjects[i].lecture_total,subjects[i].lecture_left);
+            if (subjects[i].lab_total!=-1){
+            act_log("Lab",subjects[i].lab_total,subjects[i].lab_left);
+            }
+            if (subjects[i].tut_total!=-1){
+            act_log("tut",subjects[i].tut_total,subjects[i].tut_left);
+            }
+        }
+        std::cout << "\ntype :menu to go back to menu\n";
+        std::string menuu;
+        std::cin>>menuu; // idhar getline shayad better rahe 
+        if (menuu==":menu"){ 
+            return ;
+        }
+        else {
+            std::cout << "oh cmon \n";
+        }
+    }
+    void edit_wd(){
+        system("nvim work_days.txt");
+    }
 };
 class UI{
 private:
@@ -395,8 +460,8 @@ public:
     void menue(){
         system("clear");
         std::cout << "\n1 : log absent  " ;
-        std::cout << "\n2 : classes you can leave  ";
-        std::cout << "\n3 : edit classes ";
+        std::cout << "\n2 : classes you can leave at this point ";
+        std::cout << "\n3 : edit total working days  ";
         std::cout << "\n4 : exit\n";      
     }
     void menue_ask(){
@@ -409,8 +474,10 @@ public:
             switch(x){
             case 1 : db.getData();
                      break;
-            case 2 : break;
-            case 3 : break;
+            case 2 : db.showlog();
+                     break;
+            case 3 : db.edit_wd();
+                     break;
             case 4 : flag=true;
                      break;
             default: std::cout << "cmmon buddy how hard it is to press 1-4\n";

@@ -2,7 +2,7 @@ Ai
 Total Lecture : 30
 Lecture Left : 0
 Total Lab : 15
-Lab Left : 0
+Lab Left : 1
 Totat tut : 0
 Tut left : 0
 Analog
@@ -28,7 +28,7 @@ Totat tut : 19
 Tut left : 1
 Network
 Total Lecture : 56
-Lecture Left : 0
+Lecture Left : 1
 Total Lab : 0
 Lab Left : 0
 Totat tut : 15
