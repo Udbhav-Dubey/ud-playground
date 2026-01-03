@@ -1,5 +1,0 @@
-monday : 19
-tuesday : 18
-wednesday : 17
-thursday : 15
-friday : 19
