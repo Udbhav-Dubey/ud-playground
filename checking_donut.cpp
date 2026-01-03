@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
-#include <unistd.h> // for usleep (Linux/Mac). On Windows, replace with Sleep.
+#include <unistd.h> 
 
 int main() {
     float A = 0, B = 0;
@@ -10,14 +10,14 @@ int main() {
     float z[1760];
     char b[1760];
 
-    std::cout << "\x1b[2J"; // clear screen
+    std::cout << "\x1b[2J"; 
 
     for(;;) {
         std::memset(b,32,1760);
         std::memset(z,0,7040);
 
-        for(j=0; j < 6.28; j += 0.07) { // j goes around circle
-            for(i=0; i < 6.28; i += 0.02) { // i goes around donut
+        for(j=0; j < 6.28; j += 0.07) { 
+            for(i=0; i < 6.28; i += 0.02) { 
                 float c = std::sin(i),
                       d = std::cos(j),
                       e = std::sin(A),
@@ -41,13 +41,13 @@ int main() {
             }
         }
 
-        std::cout << "\x1b[H"; // reset cursor
+        std::cout << "\x1b[H"; 
         for(k=0; k < 1760; k++)
             std::putchar(k % 80 ? b[k] : 10);
 
         A += 0.04;
         B += 0.08;
-        usleep(30000); // sleep 30ms
+        usleep(30000); 
     }
 }
 
