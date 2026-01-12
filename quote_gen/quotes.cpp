@@ -44,7 +44,9 @@ void showRandom(){
     std::string line;
     while(std::getline(in,line)){
         quotes.push_back(line);
+
     }
+    quotes.push_back(text);
 if (quotes.empty()){
     std::cout << text << "\n";
     return ;
