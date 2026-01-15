@@ -7,6 +7,9 @@
 #include <iostream>
 #include <netdb.h>
 #include <cstring>
+#include <poll.h>
+#include <algorithm>
+#include <unordered_map>
 const constexpr char* PORT ="9669";
 int main (){
 struct addrinfo hints,*res,*p;
@@ -22,7 +25,7 @@ if (status!=0){
     }
 int sockfd;
 for (p=res;p!=nullptr;p=p->ai_next){
-    sockfd=socket(res->ai_family,res->ai_socktype,res->ai_protocol);
+    sockfd=socket(p->ai_family,p->ai_socktype,p->ai_protocol);
     if (sockfd==-1){
         perror("error in sockfd\n");
         continue;
@@ -49,65 +52,105 @@ if (listen(sockfd,10)==-1){
     return 1;
 }
 std::cout << "[+] listing on port " << PORT << "\n";
-struct sockaddr_storage client_addr;
-socklen_t addr_size=sizeof(client_addr);
-int accfd=accept(sockfd,(struct sockaddr*)&client_addr,&addr_size);
-if (accfd==-1){
-    perror("accept");
-    close(sockfd);
-    return 1;
-}
-char ipstr[INET6_ADDRSTRLEN];
-void *addr;
-if (client_addr.ss_family==AF_INET){
-    struct sockaddr_in*ipv4=(struct sockaddr_in*)&client_addr;
-    addr=&(ipv4->sin_addr);
-}    
-    else {
-    struct sockaddr_in6*ipv6=(struct sockaddr_in6*)&client_addr;
-    addr=&(ipv6->sin6_addr);
-    }
-inet_ntop(client_addr.ss_family,addr,ipstr,sizeof(ipstr));
-std::cout << "Connected to client : " << ipstr << "\n";
-size_t buff_size=1024;
-char buffer[1024];
-std::string message;
-bool quit=0;
+std::vector<pollfd> poll_fds;
+poll_fds.push_back({
+   .fd=sockfd,
+   .events=POLLIN,
+   .revents=0
+});
+size_t BUF_SIZE=1024;
+int timeout_millsecs=500;
+std::unordered_map<int,std::pair<std::string,std::string>> map;
+std::string messeze;
+map[0]={"server socket","whats your name da \n"};
 while(true){
-    memset(buffer,0,buff_size-1);
-    int bytes=recv(accfd,buffer,buff_size-1,0);
-    if (bytes==0){
-        std::cout << "client disconnected\n";
+    int red=poll(poll_fds.data(),poll_fds.size(),timeout_millsecs);
+    if (red<0){
+        if (errno==EINTR){continue;}
+        perror("poll");
         break;
     }
-    else if (bytes<0){
-        perror("recv");
-        close(accfd);
-        return 1;
+    for (int i=0;i<poll_fds.size();i++){
+        pollfd &pfd=poll_fds[i];
+        if ((pfd.fd==sockfd)&&(pfd.revents&POLLIN)){
+            sockaddr_storage addr;
+            socklen_t alen=sizeof(addr);
+            int accfd=accept(sockfd,(sockaddr*)&addr, &alen);
+            if (accfd<0){
+                perror("accept");
+                continue;
+            }
+            char wbuf[1024];
+            //int wastrecv=recv(accfd,wbuf,1024,0);
+
+            int ss=send(accfd,map[0].second.data(),map[0].second.size(),0);
+            if (ss<0){
+                std::cout << "couldnt send name messege \n";
+                perror("send");
+            }
+            char cl_name[256];
+            recv(accfd,cl_name,256,0);
+            map[accfd]={cl_name," "};
+            poll_fds.push_back({.fd=accfd,.events=POLLIN,.revents=0});
+            std::cout << "New client : fd = " << accfd << "\n";
+        }
+        if (pfd.revents&POLLIN){
+            std::cout << map[pfd.fd].first << " is saying something\n";
+            char buf[BUF_SIZE];
+            int rec=recv(pfd.fd,buf,BUF_SIZE,0);
+            if (rec==0){
+                close(pfd.fd);
+                poll_fds.erase( 
+                std::remove_if(poll_fds.begin(),poll_fds.end(),[&](const pollfd&x){return x.fd==pfd.fd;}),
+                    poll_fds.end()        
+                );
+                continue;
+            }
+            if (rec<0){
+                perror("recv");
+                continue;
+            }
+            // need to clear messeze also 
+           // messeze.append(buf,rec);
+            map[pfd.fd].second.append(buf,rec);
+            pfd.events|=POLLOUT;
+           /* for (int j=0;j<poll_fds.size();j++){
+                if (pfd.fd==poll_fds[j].fd){
+                    continue;
+                }
+                else {
+                    poll_fds[j].events|=POLLOUT;
+                }
+            }
+            */
+        }
+        if (pfd.revents&POLLOUT){
+            for (int j=0;i<poll_fds.size();j++){
+                if (pfd.fd==poll_fds[j].fd){
+                    continue;
+                }
+                else {
+            std::string tbs=map[pfd.fd].first+" : "+map[pfd.fd].second;
+            int senty=send(poll_fds[j].fd,tbs.data(),tbs.size(),0);
+            if (senty<0){
+            perror("send");
+            continue;
+            }
+            tbs.clear();
+            map[pfd.fd].second.clear();
+                }
+            }
+            }
+        if (pfd.revents&POLLHUP){
+            close(pfd.fd);
+            poll_fds.erase(
+            std::remove_if(poll_fds.begin(),poll_fds.end(),[&](const pollfd&x){return x.fd==pfd.fd;}),poll_fds.end()
+                    );
+            // remove map too
+            break;
+        }
     }
-    buffer[bytes]='\0';
-    std::cout << "Client : " << buffer << "\n";
-    if (strncmp(buffer,"quit",4)==0){
-        std::cout << "Client Disconnected\n";
-        break;
-    }
-    std::cout << "Server : " ;
-    std::getline(std::cin,message);
-    message+='\0';
-    if (message.find("quit")==0){
-        std::cout << "[+]server closed its connection";
-        message="server closed its connection , bye bye ";
-        message+='\0';
-        quit=1;
-    }
-    if (send(accfd,message.c_str(),message.length()-1,0)==-1){
-        perror("send");
-        break;
-    }
-    if (quit==1){break;}
 }
 close(sockfd);
-close(accfd);
-std::cout << "server closed its connections\n";
 return 0;
 }
