@@ -106,7 +106,7 @@ int main (int argc,char*argv[3]){
                     break;
                 }
                 else {
-                    writebuf+=read_buffer+"\n";
+                    writebuf+=read_buffer;
                     poll_fds[1].events|=POLLOUT;
                     std::cout << "> " << std::flush;
                     read_buffer.clear();

@@ -153,6 +153,7 @@ while(true){
                 else {
                     pollfd &pfdj=poll_fds[j];
                     mp[pfdj.fd].readbuf.append(buf,rec);
+                    mp[pfdj.fd].writebuf+=mp[pfd.fd].name+" : ";
                     mp[pfdj.fd].writebuf+=mp[pfdj.fd].readbuf;
                     mp[pfdj.fd].readbuf.clear();
                     pfdj.events|=POLLOUT;
