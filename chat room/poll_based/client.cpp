@@ -45,6 +45,11 @@ int main (int argc,char*argv[3]){
     char buffer[buffer_size];
     std::string message;
     std::cout << "type quit to leave : \n";
+   // char serverfirst[1024];
+   // int rr=recv(sockfd,serverfirst,1024,0);
+   // if (rr<0){
+    //    std::cout << "no first messege from server \n";
+   // }
     while(true){
         std::cout << "Client : " ;
         std::getline(std::cin,message);
