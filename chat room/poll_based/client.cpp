@@ -6,7 +6,20 @@
 #include <string>
 #include <unistd.h>
 #include <netdb.h>
-#define buffer_size 1024
+#include <fcntl.h>
+#include <vector>
+#include <poll.h>
+bool set_nonblocking(int fd){
+    int flags=fcntl(fd,F_GETFL,0);
+    if (flags==-1){
+        perror("fnctl FGETFL");
+    }
+    if (fcntl(fd,F_SETFL,flags|O_NONBLOCK)==-1){
+        perror("fnctl F_SETFL");
+        return false;
+    }
+    return true;
+    }
 int main (int argc,char*argv[3]){
     if (argc!=3){
         std::cout << "error: not enough inputs please type ip then port with it also\n";
@@ -42,43 +55,103 @@ int main (int argc,char*argv[3]){
         freeaddrinfo(res);
         return 1;
     }
-    char buffer[buffer_size];
-    std::string message;
-    std::cout << "type quit to leave : \n";
-   // char serverfirst[1024];
-   // int rr=recv(sockfd,serverfirst,1024,0);
-   // if (rr<0){
-    //    std::cout << "no first messege from server \n";
-   // }
+    freeaddrinfo(res);
+    std::cout << "[+] connected to server: \n";
+    if (!set_nonblocking(sockfd)){
+        close(sockfd);
+        return 1;
+    }
+    if (!set_nonblocking(STDIN_FILENO)){
+        close(sockfd);
+        return 1;
+    }
+    std::vector<pollfd>poll_fds;
+    poll_fds.push_back({
+        .fd=STDIN_FILENO,
+        .events=POLLIN,
+        .revents=0
+            });
+    poll_fds.push_back({
+        .fd=sockfd,
+        .events=POLLIN,
+        .revents=0
+            });
+    std::string read_buffer;
+    std::string serv_buffer;
+    std::string writebuf;
+    std::string curr_line;
+    size_t BUF_SIZE=1024;
+    std::cout << "type quit to exit\n";
+    std::cout << "> " << std::flush ;
     while(true){
-        std::cout << "Client : " ;
-        std::getline(std::cin,message);
-        message+='\0';
-        if (send(sockfd,message.c_str(),message.size(),0)==-1){
-            perror("send");
+        int ready = poll(poll_fds.data(),poll_fds.size(),-1);
+        if (ready<0){
+            perror("poll");
             break;
         }
-        if (message.find("quit")==0){
-            std::cout << "closing connection\n";
-            break;
+        if (poll_fds[0].revents&POLLIN){
+            char buf[BUF_SIZE];
+            int rr=read(STDIN_FILENO,buf,BUF_SIZE);
+            if (rr<0){
+                perror("read stdin");
+                break;
+            }
+            else if (rr==0){
+                perror("\n[+] bye bye \n");
+                break;
+            }
+            else {
+                read_buffer.append(buf,rr);
+                if (read_buffer=="quit"){
+                    break;
+                }
+                else {
+                    writebuf+=read_buffer+"\n";
+                    poll_fds[1].events|=POLLOUT;
+                    std::cout << "> " << std::flush;
+                    read_buffer.clear();
+                }
+            }
         }
-        memset(buffer,0,sizeof(buffer));
-        int bytes=recv(sockfd,buffer,buffer_size-1,0);
-        if (bytes<0){
-            perror("bytes");
-            break;
+        if (poll_fds[1].revents&POLLIN){
+            char buf[BUF_SIZE];
+            int rr=recv(sockfd,buf,BUF_SIZE,0);
+            if (rr<0){
+                perror("recv");
+                break;
+            }
+            if (rr==0){
+                std::cout << "server said bye bye\n";
+                break;
+            }
+            else {
+                serv_buffer.append(buf,rr);
+                std::cout << serv_buffer << " >" << std::flush;
+                serv_buffer.clear();
+            }
         }
-        if (bytes==0){
-            std::cout << "connection closed by server\n";
-            break;
+        if (poll_fds[1].revents&POLLOUT){
+            if (!writebuf.empty()){
+                int s=send(sockfd,writebuf.data(),writebuf.size(),0);
+                if (s<0){
+                    perror("send");
+                    break;
+                }
+                else {
+                    writebuf.erase(0,s);
+                    if (writebuf.empty()){
+                        poll_fds[1].events&=~POLLOUT;
+                    }
+                }
+            }
         }
-        buffer[bytes]='\0';
-        std::cout << "Server : " << buffer << "\n";
-        if (strncmp(buffer,"quit",4)==0){
-            std::cout << "connection closed by client\n";
+        if(poll_fds[1].revents&POLLHUP){
+            std::cout << "\n[!] connection error \n";
             break;
         }
     }
     close(sockfd);
+    int flags=fcntl(STDIN_FILENO,F_GETFL,0);
+    fcntl(STDIN_FILENO,F_SETFL,flags&~O_NONBLOCK);
     return 0;
 }

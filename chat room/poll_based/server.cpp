@@ -10,6 +10,7 @@
 #include <poll.h>
 #include <algorithm>
 #include <unordered_map>
+#include <fcntl.h>
 struct Client{
     int fd;
     bool name_flag;
@@ -18,6 +19,29 @@ struct Client{
     std::string writebuf{};
     Client():fd(-1),name_flag(false){}
 };
+bool set_nonblocking(int fd){
+    int flags=fcntl(fd,F_GETFL,0);
+    if (flags==-1){
+        perror("fcntl F_GETFL");
+        return false;
+    }
+    if (fcntl(fd,F_SETFL,flags|O_NONBLOCK)==-1){
+        perror("fcntl FSETFL O_NONBLOCK");
+        return false;
+    }
+    return true;
+}
+void remove_client(int fd,std::unordered_map<int,Client>&mp,std::vector<pollfd>&poll_fds){
+    auto it=mp.find(fd);
+    if (it!=mp.end()){
+        std::cout << "[-] Client disconnected : " << it->second.name << " fd = " << fd << " \n";
+        mp.erase(it);
+    }
+    close(fd);
+    poll_fds.erase(
+        std::remove_if(poll_fds.begin(),poll_fds.end(),[fd](const pollfd&pfd){return pfd.fd==fd;}),
+            poll_fds.end());
+}
 const constexpr char* PORT ="9669";
 int main (){
 struct addrinfo hints,*res,*p;
@@ -88,30 +112,32 @@ while(true){
                 perror("accept");
                 continue;
             }
+            if (!set_nonblocking(accfd)){
+                close(accfd);
+                continue;
+            }
+            Client cl; 
+            cl.name_flag=0;
+            poll_fds.push_back({.fd=accfd,.events=POLLIN,.revents=0});
             int sendy=send(accfd,nameda.data(),nameda.size(),0);
             if (sendy<0){
                 std::cout << "error in sending name\n";
             }
-            Client cl; 
-            cl.name_flag=0;
-            mp[accfd]=cl;
-            poll_fds.push_back({.fd=accfd,.events=POLLIN,.revents=0});
+
             std::cout << "New client : fd = " << accfd << "\n";
         }
-        if (pfd.revents&POLLIN){
-            std::cout << mp[pfd.fd].name << " is saying something\n";
+        if ((pfd.fd!=sockfd)&&pfd.revents&POLLIN){
+          //  std::cout << mp[pfd.fd].name << " is saying something\n";
             char buf[BUF_SIZE];
             int rec=recv(pfd.fd,buf,BUF_SIZE,0);
             if (rec==0){
-                close(pfd.fd);
-                poll_fds.erase( 
-                std::remove_if(poll_fds.begin(),poll_fds.end(),[&](const pollfd&x){return x.fd==pfd.fd;}),
-                    poll_fds.end()        
-                );
+                remove_client(pfd.fd,mp,poll_fds);
+                i--;
                 continue;
             }
             if (rec<0){
                 perror("recv");
+                i--;
                 continue;
             }
 
@@ -120,10 +146,6 @@ while(true){
             mp[pfd.fd].name_flag=1;
             }
             else {
-            //mp[pfd.fd].readbuf.append(buf,rec);
-            //mp[pfd.fd].writebuf+=mp[pfd.fd].readbuf;
-            //mp[pfd.fd].readbuf.clear();
-            //pfd.events|=POLLOUT;
             for (int j=0;j<poll_fds.size();j++){
                 if (pfd.fd==poll_fds[j].fd || pfd.fd==sockfd){
                     continue;
@@ -152,11 +174,8 @@ while(true){
         }
         }
         if (pfd.revents&POLLHUP){
-            poll_fds.erase(
-            std::remove_if(poll_fds.begin(),poll_fds.end(),[&](const pollfd&x){return x.fd==pfd.fd;}),poll_fds.end()
-                    );
+            remove_client(pfd.fd,mp,poll_fds);
             i--;
-            break;
         }
     }
 }
