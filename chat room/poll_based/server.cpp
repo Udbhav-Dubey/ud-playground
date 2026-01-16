@@ -16,6 +16,7 @@ struct Client{
     std::string name{};
     std::string readbuf{};
     std::string writebuf{};
+    Client():fd(-1),name_flag(false){}
 };
 const constexpr char* PORT ="9669";
 int main (){
@@ -114,28 +115,31 @@ while(true){
                 continue;
             }
 
-            if (mp[pfd.fd].name_flag==1){
-            mp[pfd.fd].readbuf.append(buf,rec);
-            mp[pfd.fd].writebuf+=mp[pfd.fd].readbuf;
-            mp[pfd.fd].readbuf.clear();
-            pfd.events|=POLLOUT;
-            }
-            else {
+            if (mp[pfd.fd].name_flag==0){
             mp[pfd.fd].name.append(buf,rec);
             mp[pfd.fd].name_flag=1;
             }
-           /* for (int j=0;j<poll_fds.size();j++){
-                if (pfd.fd==poll_fds[j].fd){
+            else {
+            //mp[pfd.fd].readbuf.append(buf,rec);
+            //mp[pfd.fd].writebuf+=mp[pfd.fd].readbuf;
+            //mp[pfd.fd].readbuf.clear();
+            //pfd.events|=POLLOUT;
+            for (int j=0;j<poll_fds.size();j++){
+                if (pfd.fd==poll_fds[j].fd || pfd.fd==sockfd){
                     continue;
                 }
                 else {
-                    poll_fds[j].events|=POLLOUT;
+                    pollfd &pfdj=poll_fds[j];
+                    mp[pfdj.fd].readbuf.append(buf,rec);
+                    mp[pfdj.fd].writebuf+=mp[pfdj.fd].readbuf;
+                    mp[pfdj.fd].readbuf.clear();
+                    pfdj.events|=POLLOUT;
                 }
             }
-            */
+            } 
         }
         if (pfd.revents&POLLOUT){
-
+            if (!mp[pfd.fd].writebuf.empty()){
             int sendy=send(pfd.fd,mp[pfd.fd].writebuf.data(),mp[pfd.fd].writebuf.size(),0);
             if (sendy<0){
             //    close(pfd.fd);
@@ -146,15 +150,18 @@ while(true){
                 pfd.events&=~POLLOUT;
             }
         }
+        }
         if (pfd.revents&POLLHUP){
-            close(pfd.fd);
             poll_fds.erase(
             std::remove_if(poll_fds.begin(),poll_fds.end(),[&](const pollfd&x){return x.fd==pfd.fd;}),poll_fds.end()
                     );
-            // remove map too
+            i--;
             break;
         }
     }
+}
+for (auto &pair:mp){
+    close(pair.first);
 }
 close(sockfd);
 return 0;
