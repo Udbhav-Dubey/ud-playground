@@ -19,37 +19,6 @@ This is not meant to be polished, production-ready, or consistent.
 
 ---
 
-## Notable Experiments
-
-### 🧠 Custom Memory Allocator (`custom_memory_allocator/`)
-Experiments with manual memory management in C++.
-
-Includes:
-- Simple bump allocators
-- Variations of allocator implementations
-- Small benchmarks and tests
-
-Purpose:
-- Understand allocation strategies
-- Explore performance trade-offs
-- Learn how allocators work under the hood
-
----
-
-### 💬 Chat Room / Two-Way Communication (`chat room/`)
-Basic client–server communication using sockets.
-
-Includes:
-- Simple client-server chat programs
-- Two-way communication experiments
-- Blocking socket implementations
-
-Purpose:
-- Learn raw socket programming
-- Understand message flow and connection handling
-
----
-
 ### 🧪 Small C++ Experiments
 Scattered single-file programs exploring random ideas, such as:
 - ASCII / terminal output experiments
@@ -73,6 +42,8 @@ Some projects originally started here but were later moved to their own reposito
 
 - **Grid-based games (Snake, Maze)** → moved to a dedicated repo
 - **POSIX HTTP server** → moved to its own repository
+- **posix chat** → moved to its own repository 
+- **custom memory allocators** → moved to its own repository 
 
 This repo keeps only the early or experimental stages.
 
