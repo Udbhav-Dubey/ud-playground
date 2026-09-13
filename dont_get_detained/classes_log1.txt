@@ -1,0 +1,49 @@
+Ai_ethics
+Total Lecture : 43
+Lecture Left : 1
+Total Lab : 0
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+Elctric_machinery
+Total Lecture : 43
+Lecture Left : 0
+Total Lab : 14
+Lab Left : 0
+Totat tut : 14
+Tut left : 0
+DAA
+Total Lecture : 43
+Lecture Left : 2
+Total Lab : 14
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+OS
+Total Lecture : 44
+Lecture Left : 1
+Total Lab : 14
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+MAths
+Total Lecture : 44
+Lecture Left : 1
+Total Lab : 14
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
+Power_system
+Total Lecture : 44
+Lecture Left : 0
+Total Lab : 0
+Lab Left : 0
+Totat tut : 14
+Tut left : 1
+OOPs
+Total Lecture : 43
+Lecture Left : 3
+Total Lab : 14
+Lab Left : 0
+Totat tut : 0
+Tut left : 0
